@@ -1,0 +1,62 @@
+# docker-compose.yml — starts Mosquitto (MQTT broker) and PostgreSQL 16
+# Run from the buggy-platform/ folder:  docker compose up -d
+# Stop:  docker compose down
+# View logs:  docker compose logs -f
+
+services:
+  # ──────────────────────────────────────────────────────────
+  # Mosquitto — the MQTT broker
+  # The ESP32 (and later the simulator) publish telemetry here.
+  # The Node ingest service subscribes here.
+  # Port 1883 is the standard unencrypted MQTT port.
+  # ──────────────────────────────────────────────────────────
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: buggy-mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"     # MQTT TCP port (for devices and backend)
+      - "9001:9001"     # WebSocket port (reserved for future use)
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto-data:/mosquitto/data
+      - mosquitto-log:/mosquitto/log
+    healthcheck:
+      # Check that the broker process is listening on port 1883
+      test: ["CMD-SHELL", "mosquitto_sub -t '$$SYS/#' -C 1 -W 3 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ──────────────────────────────────────────────────────────
+  # PostgreSQL 16 — the database
+  # Stores trips, readings, trip_summaries, and users.
+  # Data is kept in a named volume so it survives container restarts.
+  # The schema.sql file is mounted into /docker-entrypoint-initdb.d/
+  # which Postgres runs automatically on first startup (only once).
+  # ──────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: buggy-postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: buggy
+      POSTGRES_PASSWORD: buggy_dev_pw      # dev-only, not for production
+      POSTGRES_DB: buggy_telemetry
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U buggy -d buggy_telemetry"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  mosquitto-data:
+  mosquitto-log:
+  pgdata:

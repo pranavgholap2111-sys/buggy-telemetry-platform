@@ -1,0 +1,16 @@
+{
+  "name": "buggy-simulator",
+  "version": "1.0.0",
+  "description": "Fake ESP32 that publishes realistic telemetry to Mosquitto",
+  "main": "fake-buggy.js",
+  "scripts": {
+    "start": "node fake-buggy.js",
+    "fast": "node fake-buggy.js --fast"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^18.0.5",
+    "mqtt": "5.3.0",
+    "pg": "^8.23.1"
+  }
+}
