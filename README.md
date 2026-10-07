@@ -215,7 +215,12 @@ docker compose -f infra/docker-compose.yml down
 
 ## License
 
-MIT — Free to use, modify, and share.
+## License & Copyright
+
+© 2026 Pranav Sunil Gholap. All rights reserved. 
+
+This repository is shared publicly for portfolio and employment evaluation purposes only. 
+Unauthorized copying, distribution, or reuse of this codebase is strictly prohibited.
 
 ## Credits
 
